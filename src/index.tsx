@@ -1,75 +1,80 @@
 'use strict';
 
-import $ from 'jquery';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import './index.less';
 import Canvas from './canvas/canvas';
 import 'butterfly-dag/dist/index.css';
-import {transformInitData, transformChangeData, diffPropsData} from './adaptor';
+import { transformInitData, transformChangeData, diffPropsData } from './adaptor';
 import * as _ from 'lodash';
 
 // 跟antd的table的column的概念类似
 interface columns {
-  title?: string,
-  key: string,
-  width?: number,
-  primaryKey: boolean,
-  render?(text: any, record: any, index: number): void
+  title?: string;
+  key: string;
+  width?: number;
+  primaryKey: boolean;
+  render?(text: any, record: any, index: number): void;
 }
 
 interface config {
-  delayDraw: number,
+  delayDraw: number;
   extraPos?: {
-    paddingLeft?: number,
-    paddingRight?: number,
-    paddingTop?: number,
-    paddingBottom?: number,
-    paddingCenter?: number,
-  },
-  sortable?: boolean | {
-    source?: boolean,
-    target?: boolean
-  },
-  linkNumLimit?: number | {
-    source?: number,
-    target?: number
-  }
+    paddingLeft?: number;
+    paddingRight?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+    paddingCenter?: number;
+  };
+  sortable?:
+    | boolean
+    | {
+        source?: boolean;
+        target?: boolean;
+      };
+  linkNumLimit?:
+    | number
+    | {
+        source?: number;
+        target?: number;
+      };
 }
 
 interface ComProps {
-  width?: number | string,
-  height?: number | string,
-  type?: string,
-  className?: string,
-  sourceClassName?: string,
-  targetClassName?: string,
-  columns: Array<columns>,
-  sourceData: Array<any> | Object,
-  targetData: Array<any> | Object,
-  mappingData: Array<any>,
-  readonly?: boolean,
-  config?: config,
-  emptyContent?: string | JSX.Element,
-  emptyWidth?: number | string,
-  isConnect?(edge: any): boolean,
-  onLoaded(canvas: any): void,
-  onChange(data: any): void,
-  onRowMouseOver?(row:any):void,
-  onRowMouseOut?(row:any):void,
-};
+  width?: number | string;
+  height?: number | string;
+  type?: string;
+  className?: string;
+  sourceClassName?: string;
+  targetClassName?: string;
+  columns: Array<columns>;
+  sourceData: Array<any> | Object;
+  targetData: Array<any> | Object;
+  mappingData: Array<any>;
+  readonly?: boolean;
+  config?: config;
+  emptyContent?: string | JSX.Element;
+  emptyWidth?: number | string;
+  isConnect?(edge: any): boolean;
+  onLoaded(canvas: any): void;
+  onChange(data: any): void;
+  onRowMouseOver?(row: any): void;
+  onRowMouseOut?(row: any): void;
+}
 
 export default class DataMapping extends React.Component<ComProps, any> {
   protected canvas: any;
   private _isRendering: boolean;
   props: any;
+  wrapper: any;
   constructor(props: ComProps) {
     super(props);
     this.canvas = null;
     this._isRendering = false;
+    this.wrapper = React.createRef();
   }
   componentDidMount() {
-    let root = ReactDOM.findDOMNode(this) as HTMLElement;
+    let root = this.wrapper.current;
 
     if (this.props.width !== undefined || this.props.width !== 'auto') {
       root.style.width = (this.props.width || 500) + 'px';
@@ -90,9 +95,9 @@ export default class DataMapping extends React.Component<ComProps, any> {
       emptyContent: this.props.emptyContent,
       emptyWidth: this.props.emptyWidth,
       sourceClassName: this.props.sourceClassName || '',
-      targetClassName: this.props.targetClassName || ''
+      targetClassName: this.props.targetClassName || '',
     });
-    
+
     let canvasObj = {
       root: root,
       disLinkable: true,
@@ -107,7 +112,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
           arrow: true,
           isExpandWidth: true,
           arrowPosition: 1,
-          arrowOffset: 5
+          arrowOffset: 5,
         },
         endpoint: {
           limitNum: undefined,
@@ -115,21 +120,21 @@ export default class DataMapping extends React.Component<ComProps, any> {
             left: 0,
             right: 0,
             top: 0,
-            botton: 0
-          }
-        }
+            botton: 0,
+          },
+        },
       },
-      extraPos: _.get(this.props, 'config.extraPos')
+      extraPos: _.get(this.props, 'config.extraPos'),
     };
     if (!!this.props.readonly) {
       canvasObj.disLinkable = false;
       canvasObj.linkable = false;
     }
-    let _linkNumLimit = _.get(this.props, 'config.linkNumLimit')
-    if (typeof _linkNumLimit === 'number' && !isNaN(_linkNumLimit))  {
+    let _linkNumLimit = _.get(this.props, 'config.linkNumLimit');
+    if (typeof _linkNumLimit === 'number' && !isNaN(_linkNumLimit)) {
       canvasObj.theme.endpoint.limitNum = _linkNumLimit;
     }
-    if (Object.prototype.toString.call(_linkNumLimit) === '[object Object]'){
+    if (Object.prototype.toString.call(_linkNumLimit) === '[object Object]') {
       canvasObj.theme.endpoint.limitNum = _linkNumLimit;
     }
     this.canvas = new Canvas(canvasObj);
@@ -150,7 +155,6 @@ export default class DataMapping extends React.Component<ComProps, any> {
     }, _.get(this.props, 'config.delayDraw', 0));
   }
   shouldComponentUpdate(newProps: ComProps, newState: any) {
-
     if (this._isRendering) {
       return false;
     }
@@ -167,7 +171,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
       emptyContent: newProps.emptyContent,
       emptyWidth: newProps.emptyWidth,
       sourceClassName: newProps.sourceClassName || '',
-      targetClassName: newProps.targetClassName || ''
+      targetClassName: newProps.targetClassName || '',
     });
     let diffInfo = diffPropsData(result, {
       nodes: this.canvas.nodes,
@@ -176,7 +180,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
           source: (item.options.source || '').replace('-right', ''),
           target: (item.options.target || '').replace('-left', ''),
         });
-      })
+      }),
     });
 
     if (diffInfo.addEdges && diffInfo.addEdges.length > 0) {
@@ -186,7 +190,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
     if (diffInfo.rmEdges && diffInfo.rmEdges.length > 0) {
       this.canvas.removeEdges(diffInfo.rmEdges.map((item) => item.id));
     }
-    
+
     if (diffInfo.addNodes && diffInfo.addNodes.length > 0) {
       // console.log(diffInfo.addNodes);
       this.canvas.addNodes(diffInfo.addNodes);
@@ -233,7 +237,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
           targetNode: item.options.targetNode,
           source: _newSource,
           target: _newTarget,
-          type: 'endpoint'
+          type: 'endpoint',
         };
       });
       this.canvas.removeEdges(links, true);
@@ -243,15 +247,15 @@ export default class DataMapping extends React.Component<ComProps, any> {
         let sourceEndpoint = targetNode.getEndpoint(item.source);
         let result = this.canvas._checkLinkNum(targetEndpoint, undefined, 'target');
         // 取消link状态
-        if(!result) {
-          sourceEndpoint && $(sourceEndpoint.dom).removeClass('link');
+        if (!result) {
+          sourceEndpoint && sourceEndpoint.dom.classList.remove('link');
         }
         return result;
       });
       return this.canvas.addEdges(newLinkOpts, true);
-    }
+    };
     let _isInit = true;
-    this.canvas.on('system.link.connect', (data: { links: any; }) => {
+    this.canvas.on('system.link.connect', (data: { links: any }) => {
       let addEdges = _addLinks(data.links || []);
       let result = [];
       addEdges.forEach((item) => {
@@ -270,7 +274,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
       this.canvas._linkedChain(result);
     });
 
-    this.canvas.on('system.link.reconnect', (data: { addLinks: any, delLinks: any }) => {
+    this.canvas.on('system.link.reconnect', (data: { addLinks: any; delLinks: any }) => {
       let addEdges = _addLinks(data.addLinks || []);
       let result = [];
       addEdges.forEach((item) => {
@@ -287,19 +291,19 @@ export default class DataMapping extends React.Component<ComProps, any> {
       this.canvas._linkedChain(result);
     });
 
-    this.canvas.on('system.links.delete', (data: { links: any; }) => {
+    this.canvas.on('system.links.delete', (data: { links: any }) => {
       this.onChange();
       this.canvas._unLinkedChain(data.links);
     });
 
     // 线段删除特殊处理
-    this.canvas.on('custom.endpoint.dragNode', (data: { data: any; }) => {
+    this.canvas.on('custom.endpoint.dragNode', (data: { data: any }) => {
       let point = data.data;
       let node = this.canvas.getNode(point.nodeId);
       let linkedPoint = node.getEndpoint(point.id + '-left', 'target');
       this.canvas.emit('InnerEvents', {
         type: 'endpoint:drag',
-        data: linkedPoint
+        data: linkedPoint,
       });
     });
     // 连线特殊处理
@@ -315,19 +319,19 @@ export default class DataMapping extends React.Component<ComProps, any> {
       }
     });
     // 聚焦链路
-    this.canvas.on('custom.endpoint.focus', (data: { point: any; }) => {
+    this.canvas.on('custom.endpoint.focus', (data: { point: any }) => {
       this.canvas._focusChain(data.point);
       this.props.onRowMouseOver && this.props.onRowMouseOver(data.point);
     });
     // 失焦链路
-    this.canvas.on('custom.endpoint.unFocus', (data: { point: any; }) => {
+    this.canvas.on('custom.endpoint.unFocus', (data: { point: any }) => {
       this.canvas._unFocusChain(data.point);
       this.props.onRowMouseOut && this.props.onRowMouseOut(data.point);
     });
 
     // 字段重新排列
-     this.canvas.on('custom.field.sort', (data?: any) => {
-      const {nodeId, pointIds} = data;
+    this.canvas.on('custom.field.sort', (data?: any) => {
+      const { nodeId, pointIds } = data;
       let node = this.canvas.getNode(nodeId);
       if (!node) {
         return;
@@ -336,7 +340,7 @@ export default class DataMapping extends React.Component<ComProps, any> {
         let fieldPoints = [
           node.getEndpoint(pointId),
           node.getEndpoint(pointId + '-left'),
-          node.getEndpoint(pointId + '-right')
+          node.getEndpoint(pointId + '-right'),
         ];
         fieldPoints.forEach((point) => {
           if (!point) {
@@ -345,10 +349,10 @@ export default class DataMapping extends React.Component<ComProps, any> {
           point.updatePos();
         });
         let updateEdges = this.canvas.edges.filter((item: any) => {
-          if (nodeId === item.sourceNode.id && (pointId + '-right' === item.sourceEndpoint.id)) {
+          if (nodeId === item.sourceNode.id && pointId + '-right' === item.sourceEndpoint.id) {
             return true;
           }
-          if (nodeId === item.targetNode.id && (pointId + '-left' === item.targetEndpoint.id)) {
+          if (nodeId === item.targetNode.id && pointId + '-left' === item.targetEndpoint.id) {
             return true;
           }
           return false;
@@ -361,12 +365,6 @@ export default class DataMapping extends React.Component<ComProps, any> {
     });
   }
   render() {
-    return (
-      <div 
-        className={this._genClassName()}
-      >
-
-      </div>
-    )
+    return <div className={this._genClassName()} ref={this.wrapper}></div>;
   }
 }
